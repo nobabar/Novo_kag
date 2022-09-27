@@ -1,0 +1,16 @@
+#+title: Idees
+* Pré analyse
+Les données de test sont des séquences de longueur 220 avec une seule base de différence.
+Quoi utiliser pour avoir des idées de l'impact d'une mutation?
+* TODO pré analyse
+- prendre le patch des données
+- Virer les trop grosses protéines
+- Modéliser comme un texte (mot = acide aminé, vocab = 22 AA)
+- faire des requêtes pdb  pour avoir les structures dispo et faire un sous modèle avec que ces données
+- DSSP? Impact sur les structures secondaires
+- Implémenter de la bio en classant les AA par catégorie
+- Virer les séquences dupliquées (moyenne sur les autres catégories?)
+- Virer les nan dans une version du modèle
+- Essayer avec et sans pH
+- Prendre que les ph entre 6 et 9
+- Parler à Lucas Morin
