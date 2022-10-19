@@ -16,11 +16,17 @@ Quoi utiliser pour avoir des idées de l'impact d'une mutation?
 - Parler à Lucas Morin
 * TODO Paul
 ** TODO baseline avec blosum 90
+2eme étape tous contre tous vers un classement.
 ** TODO Lire article facebook PNAS
-** TODO Chercher si quelqu'un parle du tm de la protéine d'intérêt (est elle dans le train?)
+** DONE Chercher si quelqu'un parle du tm de la protéine d'intérêt (est elle dans le train?)
+** TODO récupérer l'embedding de ESM ou prottrans
+
 * TODO Baptiste
+
 ** TODO Merger les données d'autres sites
 ** TODO pH filtrer 6-9 nice
 ** TODO taille filtrer 100-400
 ** TODO filtrer une version avec la distance de levenstein pour garder que les prot mutées et saines
 https://www.kaggle.com/code/cdeotte/train-data-contains-mutations-like-test-data
+
+** TODO Rajouter dans le jeu de donnée de train le delta tm après avoir identifié les mutantes et les originales.
