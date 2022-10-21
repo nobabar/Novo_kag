@@ -72,3 +72,5 @@ thermomut_df = thermomut_df[thermomut_df["protein_sequence"] != "invalid"]
 # final dataframe
 thermomut_df = thermomut_df[[
     "gid", "protein_sequence", "dtm", "effect"]].reset_index(drop=True)
+
+thermomut_df.to_csv("./thermomut_grouped.csv")
