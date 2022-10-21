@@ -5,8 +5,7 @@ from operator import itemgetter
 
 import pandas as pd
 import requests
-import sqlite3
-from Bio import Seq, SeqIO
+from Bio import SeqIO
 
 with open('databases/thermomutdb.json') as json_file:
     thermomut_db = json.load(json_file)
@@ -14,12 +13,13 @@ with open('databases/thermomutdb.json') as json_file:
 # filter database
 
 # important columns
-column_keep = ["dtm", "uniprot", "mutation_code", "effect"]
+column_keep = ["dtm", "swissprot", "mutation_code", "effect"]
 thermomut_db = [x for x in thermomut_db if all(
     v is not None for v in itemgetter(*column_keep)(x))]
 
 # filter invalid uniport ids
-thermomut_db = [x for x in thermomut_db if x["uniprot"].startswith("P")]
+thermomut_db = [x for x in thermomut_db if re.match(
+    r"(.*)([A-Z0-9]{6})(.*)", x["swissprot"])]
 
 # filter by pH
 thermomut_db_ph = [x for x in thermomut_db if x["ph"]]
@@ -30,16 +30,19 @@ thermomut_db_ph = [x for x in thermomut_db_ph if 5 < x["ph"] < 9]
 thermomut_df = pd.DataFrame(
     [itemgetter(*column_keep)(x) for x in thermomut_db], columns=column_keep)
 
+# find swissprot ids into string
+thermomut_df['swissprot'].replace(
+    to_replace=r"(.*)([A-Z0-9]{6})(.*)", value=r"\2", regex=True, inplace=True)
 
 # make groups
 # get number of groups
-thermomut_df.groupby("uniprot").ngroups
+thermomut_df.groupby("swissprot").ngroups
 # make them and filter thoses with 4 or more proteins
 thermomut_df = thermomut_df.groupby(
-    "uniprot").filter(lambda x: len(x) >= 4)
+    "swissprot").filter(lambda x: len(x) >= 4)
 # make a new column with the group id
 thermomut_df['gid'] = (thermomut_df.groupby(
-    ['uniprot']).cumcount() == 0).astype(int).cumsum()
+    ['swissprot']).cumcount() == 0).astype(int).cumsum()
 
 
 # fetch sequences from uniprot
@@ -47,7 +50,7 @@ thermomut_df["protein_sequence"] = ""
 base_url = "https://www.uniprot.org/uniprot/"
 
 for index, row in thermomut_df.iterrows():
-    currentUrl = base_url + thermomut_df.loc[index, "uniprot"] + ".fasta"
+    currentUrl = base_url + thermomut_df.loc[index, "swissprot"] + ".fasta"
     response = requests.post(currentUrl)
     sequence = str(SeqIO.read(StringIO(''.join(response.text)), 'fasta').seq)
     mutation_code = thermomut_df.loc[index, "mutation_code"]
