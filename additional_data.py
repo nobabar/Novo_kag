@@ -13,7 +13,7 @@ with open('databases/thermomutdb.json') as json_file:
 # filter database
 
 # important columns
-column_keep = ["dtm", "swissprot", "mutation_code", "effect"]
+column_keep = ["dtm", "swissprot", "uniprot", "mutation_code", "effect"]
 thermomut_db = [x for x in thermomut_db if all(
     v is not None for v in itemgetter(*column_keep)(x))]
 
@@ -50,9 +50,19 @@ thermomut_df["protein_sequence"] = ""
 base_url = "https://www.uniprot.org/uniprot/"
 
 for index, row in thermomut_df.iterrows():
-    currentUrl = base_url + thermomut_df.loc[index, "swissprot"] + ".fasta"
-    response = requests.post(currentUrl)
-    sequence = str(SeqIO.read(StringIO(''.join(response.text)), 'fasta').seq)
+    try:
+        url = base_url + thermomut_df.loc[index, "swissprot"] + ".fasta"
+        response = requests.post(url)
+        sequence = str(SeqIO.read(
+            StringIO(''.join(response.text)), 'fasta').seq)
+    except:
+        try:
+            url = base_url + thermomut_df.loc[index, "uniprot"] + ".fasta"
+            response = requests.post(url)
+            sequence = str(SeqIO.read(
+                StringIO(''.join(response.text)), 'fasta').seq)
+        except:
+            continue
     mutation_code = thermomut_df.loc[index, "mutation_code"]
     match = re.findall(r"([a-z]+)([0-9]+)([a-z]+)", mutation_code, re.I)
     for m in match:
