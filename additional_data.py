@@ -59,9 +59,9 @@ for index, row in thermomut_df.iterrows():
         if sequence[pos-1] == m[0]:
             sequence = sequence[:(pos-1)] + \
                 m[2] + sequence[pos:]
-            continue
-        sequence = "invalid"
-        break
+        else:
+            sequence = "invalid"
+            break
     thermomut_df.loc[index, "protein_sequence"] = sequence
 
 thermomut_df = thermomut_df[thermomut_df["protein_sequence"] != "invalid"]
