@@ -53,12 +53,13 @@ for index, row in thermomut_df.iterrows():
     mutation_code = thermomut_df.loc[index, "mutation_code"]
     match = re.findall(r"([a-z]+)([0-9]+)([a-z]+)", mutation_code, re.I)
     for m in match:
-        if int(m[1]) > len(sequence):
-            m[1] = len(sequence)
-            if sequence[int(m[1])-1] == m[0]:
-                sequence = sequence[:(int(m[1])-1)] + \
-                    m[2] + sequence[int(m[1]):]
-                continue
+        pos = int(m[1])
+        if pos > len(sequence):
+            pos = len(sequence)
+        if sequence[pos-1] == m[0]:
+            sequence = sequence[:(pos-1)] + \
+                m[2] + sequence[pos:]
+            continue
         sequence = "invalid"
         break
     thermomut_df.loc[index, "protein_sequence"] = sequence
