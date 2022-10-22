@@ -62,7 +62,6 @@ for i in range(len(comp_matrix)):
             test_data.loc[j, "protein_sequence"]
         )
 
-comp_matrix = comp_matrix + np.transpose(comp_matrix)
 
 row_sums = np.sum(comp_matrix, axis=0)
 
@@ -76,4 +75,3 @@ less_idiotic_submission["tm"] = order
 less_idiotic_submission.drop("score", axis=1, inplace=True)
 less_idiotic_submission.to_csv("baseline_2.csv", index=False)
 
-https://www.quora.com/What-are-some-ways-to-aggregate-pairwise-preferences-into-a-total-order
