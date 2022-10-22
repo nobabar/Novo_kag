@@ -50,34 +50,44 @@ thermomut_df["protein_sequence"] = ""
 base_url = "https://www.uniprot.org/uniprot/"
 
 for index, row in thermomut_df.iterrows():
+    sequence = ""
+
+    # try to fetch sequence from swissprot id
     try:
         url = base_url + thermomut_df.loc[index, "swissprot"] + ".fasta"
         response = requests.post(url)
         sequence = str(SeqIO.read(
             StringIO(''.join(response.text)), 'fasta').seq)
     except:
+        # otherwise try uniprot id
         try:
             url = base_url + thermomut_df.loc[index, "uniprot"] + ".fasta"
             response = requests.post(url)
             sequence = str(SeqIO.read(
                 StringIO(''.join(response.text)), 'fasta').seq)
         except:
-            continue
-    mutation_code = thermomut_df.loc[index, "mutation_code"]
-    match = re.findall(r"([a-z]+)([0-9]+)([a-z]+)", mutation_code, re.I)
-    for m in match:
-        pos = int(m[1])
-        if pos > len(sequence):
-            pos = len(sequence)
-        if sequence[pos-1] == m[0]:
-            sequence = sequence[:(pos-1)] + \
-                m[2] + sequence[pos:]
-        else:
-            sequence = "invalid"
-            break
+            # both fetch failed, sequence is empty
+            pass
+
+    if sequence:
+        # apply mutation(s) on sequence
+        mutation_code = thermomut_df.loc[index, "mutation_code"]
+        match = re.findall(r"([a-z]+)([0-9]+)([a-z]+)", mutation_code, re.I)
+        for mutation in match:
+            pos = int(mutation[1])
+            try:
+                # try to apply the mutation to the sequence
+                if sequence[pos-1] == mutation[0]:
+                    sequence = sequence[:(pos-1)] + \
+                        mutation[2] + sequence[pos:]
+            except:
+                # if it fails then the sequence might be invalid
+                sequence = ""
+                break
     thermomut_df.loc[index, "protein_sequence"] = sequence
 
-thermomut_df = thermomut_df[thermomut_df["protein_sequence"] != "invalid"]
+# filter empty sequences
+thermomut_df = thermomut_df[thermomut_df["protein_sequence"].str.len() == 0]
 
 # final dataframe
 thermomut_df = thermomut_df[[
