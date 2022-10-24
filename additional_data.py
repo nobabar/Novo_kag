@@ -93,6 +93,10 @@ for index, row in thermomut_df.iterrows():
 # filter empty sequences
 thermomut_df = thermomut_df[thermomut_df["protein_sequence"].str.len() != 0]
 
+# filter group with less than 4 proteins
+thermomut_df = thermomut_df.groupby(
+    "gid").filter(lambda x: len(x) >= 4)
+
 # final dataframe
 thermomut_df = thermomut_df[[
     "gid", "protein_sequence", "dtm", "effect", "acc_id"]].reset_index(drop=True)
