@@ -42,8 +42,12 @@ for i in range(train_data_grouped.shape[0]):
                 last_group += 1
             train_data_grouped.loc[(i, j), "group"] = group
 
+# remove proteins without group
+train_data_grouped = train_data_grouped[train_data_grouped["group"] != 0]
+
 # select groups with 4 or more proteins
 train_data_grouped = train_data.groupby("group").filter(lambda x: len(x) >= 4)
+
 train_data_grouped = train_data_grouped.sort_index().reset_index(drop=True)
 
 train_data_grouped.to_csv("./train_grouped.csv")
