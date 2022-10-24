@@ -2,7 +2,19 @@ import Levenshtein
 import matplotlib.pyplot as plt
 import pandas as pd
 
-train_data = pd.read_csv("./train.csv")
+train_data = pd.read_csv("./train.csv", index_col="seq_id")
+
+# apply update on train data
+train_updates = pd.read_csv("train_updates_20220929.csv", index_col="seq_id")
+
+all_features_nan = train_updates.isnull().all("columns")
+
+drop_indices = train_updates[all_features_nan].index
+df_train = train_data.drop(index=drop_indices)
+
+swap_ph_tm_indices = train_updates[~all_features_nan].index
+df_train.loc[swap_ph_tm_indices, ["pH", "tm"]
+             ] = train_updates.loc[swap_ph_tm_indices, ["pH", "tm"]]
 
 # filter data
 # by size
