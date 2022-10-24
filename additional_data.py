@@ -40,13 +40,13 @@ thermomut_df.groupby("swissprot").ngroups
 # make them and filter thoses with 4 or more proteins
 thermomut_df = thermomut_df.groupby(
     "swissprot").filter(lambda x: len(x) >= 4)
-# make a new column with the group id
-thermomut_df['gid'] = (thermomut_df.groupby(
-    ['swissprot']).cumcount() == 0).astype(int).cumsum()
-
+# make a new column with the group id, starting at 1
+thermomut_df['gid'] = thermomut_df.groupby("swissprot").ngroup().add(1)
 
 # fetch sequences from uniprot
 thermomut_df["protein_sequence"] = ""
+thermomut_df["acc_id"] = ""
+
 base_url = "https://www.uniprot.org/uniprot/"
 
 for index, row in thermomut_df.iterrows():
@@ -54,17 +54,21 @@ for index, row in thermomut_df.iterrows():
 
     # try to fetch sequence from swissprot id
     try:
-        url = base_url + thermomut_df.loc[index, "swissprot"] + ".fasta"
+        swissprot_id = thermomut_df.loc[index, "swissprot"]
+        url = base_url + swissprot_id + ".fasta"
         response = requests.post(url)
         sequence = str(SeqIO.read(
             StringIO(''.join(response.text)), 'fasta').seq)
+        thermomut_df.loc[index, "acc_id"] = swissprot_id
     except:
         # otherwise try uniprot id
         try:
-            url = base_url + thermomut_df.loc[index, "uniprot"] + ".fasta"
+            uniprot_id = thermomut_df.loc[index, "uniprot"]
+            url = base_url + uniprot_id + ".fasta"
             response = requests.post(url)
             sequence = str(SeqIO.read(
                 StringIO(''.join(response.text)), 'fasta').seq)
+            thermomut_df.loc[index, "acc_id"] = uniprot_id
         except:
             # both fetch failed, sequence is empty
             pass
@@ -87,10 +91,10 @@ for index, row in thermomut_df.iterrows():
     thermomut_df.loc[index, "protein_sequence"] = sequence
 
 # filter empty sequences
-thermomut_df = thermomut_df[thermomut_df["protein_sequence"].str.len() == 0]
+thermomut_df = thermomut_df[thermomut_df["protein_sequence"].str.len() != 0]
 
 # final dataframe
 thermomut_df = thermomut_df[[
-    "gid", "protein_sequence", "dtm", "effect"]].reset_index(drop=True)
+    "gid", "protein_sequence", "dtm", "effect", "acc_id"]].reset_index(drop=True)
 
-thermomut_df.to_csv("./thermomut_grouped.csv")
+thermomut_df.to_csv("databases/thermomut_grouped.csv")
