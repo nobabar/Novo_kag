@@ -74,7 +74,7 @@ for index, row in thermomut_df.iterrows():
             thermomut_df.loc[index, "acc_id"] = uniprot_id
         except:
             # both fetch failed, sequence is empty
-            sequence = "accession id not found"
+            sequence = ""
 
     if sequence:
         # apply mutation(s) on sequence
@@ -89,7 +89,7 @@ for index, row in thermomut_df.iterrows():
                         mutation[2] + sequence[pos:]
             except:
                 # if it fails then the sequence might be invalid
-                sequence = "can't apply mutation"
+                sequence = ""
                 break
     thermomut_df.loc[index, "protein_sequence"] = sequence
 
@@ -103,18 +103,24 @@ for gid, acc_id in zip(thermomut_df["gid"].unique(), thermomut_df["acc_id"].uniq
     response = requests.post(url)
     sequence = str(SeqIO.read(
         StringIO(''.join(response.text)), 'fasta').seq)
-    thermomut_df = thermomut_df.append({"gid": gid,
-                                        "protein_sequence": sequence,
-                                        "dtm": 0,
-                                        "acc_id": acc_id,
-                                        "type": "wildtype"},
-                                       ignore_index=True)
+
+    row = {"gid": gid, "protein_sequence": sequence,
+           "dtm": 0, "acc_id": acc_id, "type": "wildtype"}
+    thermomut_df = pd.concat(
+        [thermomut_df, pd.DataFrame([row])], ignore_index=True)
 
 # filter group with less than 4 proteins
 thermomut_df = thermomut_df.groupby(
     "gid").filter(lambda x: len(x) >= 4)
 
 thermomut_df.sort_values(by=["gid", "type"], inplace=True)
+
+# set dTM of wildtype to -1000 to make it the first in rankings
+thermomut_df.loc[thermomut_df["type"] == "wildtype", "dtm"] = -1000
+
+# rank normalize the Tm
+thermomut_df["dtm"] = thermomut_df.groupby("gid")["dtm"].rank(
+    method="dense").add(-1) / thermomut_df.groupby("gid")["gid"].transform(len)
 
 # final dataframe
 thermomut_df = thermomut_df[[

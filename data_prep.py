@@ -1,4 +1,3 @@
-import Levenshtein
 import pandas as pd
 from collections import Counter
 from operator import itemgetter
@@ -160,7 +159,11 @@ train_data.sort_values(by=["group", "type"], inplace=True)
 
 train_data = train_data.reset_index(drop=True)
 
+# rank normalize the Tm
+train_data["dtm"] = train_data.groupby("group")["tm"].rank(
+    method="dense").add(-1) / train_data.groupby("group")["group"].transform(len)
+
 # remove unnecessary columns
-train_data = train_data.drop(columns=["length", "data_source", "pH"])
+train_data = train_data.drop(columns=["length", "data_source", "pH", "tm"])
 
 train_data.to_csv("./train_grouped.csv")
