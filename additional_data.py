@@ -13,7 +13,7 @@ with open('databases/thermomutdb.json') as json_file:
 # filter database
 
 # important columns
-column_keep = ["dtm", "swissprot", "uniprot", "mutation_code", "effect"]
+column_keep = ["dtm", "swissprot", "uniprot", "mutation_code"]
 thermomut_db = [x for x in thermomut_db if all(
     v is not None for v in itemgetter(*column_keep)(x))]
 
@@ -22,9 +22,12 @@ thermomut_db = [x for x in thermomut_db if re.match(
     r"(.*)([A-Z0-9]{6})(.*)", x["swissprot"])]
 
 # filter by pH
-thermomut_db_ph = [x for x in thermomut_db if x["ph"]]
-thermomut_db_ph = [x for x in thermomut_db_ph if 5 < x["ph"] < 9]
+thermomut_db = [x for x in thermomut_db if x["ph"]]
+thermomut_db = [x for x in thermomut_db if 5 < x["ph"] < 9]
 
+# filter by length
+thermomut_db = [x for x in thermomut_db if x["length"]]
+thermomut_db = [x for x in thermomut_db if 80 < x["length"] < 10000]
 
 # convert to dataframe
 thermomut_df = pd.DataFrame(
@@ -71,7 +74,7 @@ for index, row in thermomut_df.iterrows():
             thermomut_df.loc[index, "acc_id"] = uniprot_id
         except:
             # both fetch failed, sequence is empty
-            pass
+            sequence = "accession id not found"
 
     if sequence:
         # apply mutation(s) on sequence
@@ -86,19 +89,35 @@ for index, row in thermomut_df.iterrows():
                         mutation[2] + sequence[pos:]
             except:
                 # if it fails then the sequence might be invalid
-                sequence = ""
+                sequence = "can't apply mutation"
                 break
     thermomut_df.loc[index, "protein_sequence"] = sequence
 
 # filter empty sequences
 thermomut_df = thermomut_df[thermomut_df["protein_sequence"].str.len() != 0]
 
+thermomut_df["type"] = "mutated"
+
+for gid, acc_id in zip(thermomut_df["gid"].unique(), thermomut_df["acc_id"].unique()):
+    url = base_url + acc_id + ".fasta"
+    response = requests.post(url)
+    sequence = str(SeqIO.read(
+        StringIO(''.join(response.text)), 'fasta').seq)
+    thermomut_df = thermomut_df.append({"gid": gid,
+                                        "protein_sequence": sequence,
+                                        "dtm": 0,
+                                        "acc_id": acc_id,
+                                        "type": "wildtype"},
+                                       ignore_index=True)
+
 # filter group with less than 4 proteins
 thermomut_df = thermomut_df.groupby(
     "gid").filter(lambda x: len(x) >= 4)
 
+thermomut_df.sort_values(by=["gid", "type"], inplace=True)
+
 # final dataframe
 thermomut_df = thermomut_df[[
-    "gid", "protein_sequence", "dtm", "effect", "acc_id"]].reset_index(drop=True)
+    "gid", "protein_sequence", "dtm", "acc_id", "type"]].reset_index(drop=True)
 
 thermomut_df.to_csv("databases/thermomut_grouped.csv")
