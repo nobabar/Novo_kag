@@ -15,18 +15,30 @@ Quoi utiliser pour avoir des idées de l'impact d'une mutation?
 - Prendre que les ph entre 6 et 9
 - Parler à Lucas Morin
 * TODO Paul
-** TODO baseline avec blosum 90
+** DONE baseline avec blosum 90
 2eme étape tous contre tous vers un classement.
-** TODO Lire article facebook PNAS
+** DONE Lire article facebook PNAS
 ** DONE Chercher si quelqu'un parle du tm de la protéine d'intérêt (est elle dans le train?)
 ** TODO récupérer l'embedding de ESM ou prottrans
+** TODO Utiliser convolution avec les deux séquences côtes à côtes.
+** TODO T-sne sur les embeddings
+** TODO Embeddings plus petits
+** TODO mixer les deux têtes du réseau
+concatenate ou add
+** TODO Pondérer par la taille des groupes : instance weight dans keras
+
+**
 
 * TODO Baptiste
 
-** TODO Merger les données d'autres sites
-** TODO pH filtrer 6-9 nice
-** TODO taille filtrer 100-400
+** DONE Merger les données d'autres sites
+** TODO pH filtrer 5-9 moins nice
+** TODO taille filtrer 89-1474
 ** TODO filtrer une version avec la distance de levenstein pour garder que les prot mutées et saines
 https://www.kaggle.com/code/cdeotte/train-data-contains-mutations-like-test-data
 
 ** TODO Rajouter dans le jeu de donnée de train le delta tm après avoir identifié les mutantes et les originales.
+
+** TODO créer des classes de dTm , genre 5
+
+** TODO Wildtype dans thermomut
