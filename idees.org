@@ -32,13 +32,13 @@ concatenate ou add
 * TODO Baptiste
 
 ** DONE Merger les données d'autres sites
-** TODO pH filtrer 5-9 moins nice
-** TODO taille filtrer 89-1474
-** TODO filtrer une version avec la distance de levenstein pour garder que les prot mutées et saines
-https://www.kaggle.com/code/cdeotte/train-data-contains-mutations-like-test-data
+** DONE pH filtrer 5-9 moins nice
+** DONE taille filtrer 89-1474
+** DONE créer des groupes et récupérer les wildtypes de ces groupes dans le jeu de train
+https://www.kaggle.com/code/roberthatch/novo-train-data-contains-wildtype-groups/notebook
 
 ** TODO Rajouter dans le jeu de donnée de train le delta tm après avoir identifié les mutantes et les originales.
 
 ** TODO créer des classes de dTm , genre 5
 
-** TODO Wildtype dans thermomut
+** DONE Wildtype dans thermomut
