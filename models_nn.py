@@ -21,7 +21,6 @@ def load_mean_tensors(prot_id_list, direct):
     for i in range(len(prot_id_list)):
         cur_tensor = torch.load(direct + "/protein_id: " + str(prot_id_list[i]) + ".pt")["mean_representations"][33]
         res.append(cur_tensor.tolist())
-        # tensors_series.append(cur_tensor)
     res_np = np.matrix(res)
     return res_np
 
