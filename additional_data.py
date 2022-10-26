@@ -109,6 +109,9 @@ for gid, acc_id in zip(thermomut_df["gid"].unique(), thermomut_df["acc_id"].uniq
     thermomut_df = pd.concat(
         [thermomut_df, pd.DataFrame([row])], ignore_index=True)
 
+# remove possible duplicates
+thermomut_df.drop_duplicates(subset=["protein_sequence"], inplace=True)
+
 # filter group with less than 4 proteins
 thermomut_df = thermomut_df.groupby(
     "gid").filter(lambda x: len(x) >= 4)

@@ -32,7 +32,7 @@ train_data = train_data.sort_index().reset_index(drop=True)
 # INSERTION DELETION THRESHOLD
 D_THRESHOLD = 1
 # MIN GROUP SIZE
-MIN_GROUP_SIZE = 5
+MIN_GROUP_SIZE = 4
 
 
 def max_item_count(seq):
@@ -133,7 +133,8 @@ for i, count in enumerate(vc):
         if len(train_data.loc[train_data.gid == grp]) >= MIN_GROUP_SIZE:
             row = {"protein_sequence": wildtype, "pH": 0, "data_source": "",
                    "tm": 0, "gid": grp, "length": length, "type": "wildtype"}
-            train_data = pd.concat([train_data, pd.DataFrame([row])], ignore_index=True)
+            train_data = pd.concat(
+                [train_data, pd.DataFrame([row])], ignore_index=True)
             grp += 1
             is_retry = False
         else:
@@ -150,9 +151,14 @@ for i, count in enumerate(vc):
 # remove rows with no gid
 train_data = train_data.loc[train_data.gid != -1]
 
-train_data.sort_values(by=["gid", "type"], inplace=True)
+# remove possible duplicates
+train_data.drop_duplicates(subset=["protein_sequence"], inplace=True)
 
-train_data = train_data.reset_index(drop=True)
+# make sure all groups still have at least MIN_GROUP_SIZE
+train_data = train_data.groupby(
+    "gid").filter(lambda x: len(x) >= MIN_GROUP_SIZE)
+
+train_data.sort_values(by=["gid", "type"], inplace=True)
 
 # rank normalize the Tm
 train_data["dtm"] = train_data.groupby("gid")["tm"].rank(
