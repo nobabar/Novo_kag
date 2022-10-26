@@ -44,7 +44,8 @@ thermomut_df.groupby("swissprot").ngroups
 thermomut_df = thermomut_df.groupby(
     "swissprot").filter(lambda x: len(x) >= 4)
 # make a new column with the group id, starting at 1
-thermomut_df['gid'] = thermomut_df.groupby("swissprot").ngroup().add(1)
+thermomut_df['gid'] = "G" + \
+    thermomut_df.groupby("swissprot").ngroup().add(1).astype(str)
 
 # fetch sequences from uniprot
 thermomut_df["protein_sequence"] = ""
@@ -113,8 +114,11 @@ thermomut_df.sort_values(by=["gid"], inplace=True)
 thermomut_df["dtm"] = thermomut_df.groupby("gid")["dtm"].rank(
     method="dense") / thermomut_df.groupby("gid")["gid"].transform(len)
 
+# add unique sequence id
+thermomut_df["seqid"] = "S" + thermomut_df.index.astype(str)
+
 # final dataframe
-thermomut_df = thermomut_df[[
-    "gid", "protein_sequence", "dtm", "acc_id", "wildtype"]].reset_index(drop=True)
+thermomut_df = thermomut_df[["seqid", "gid", "protein_sequence", "dtm",
+                             "acc_id", "wildtype"]].reset_index(drop=True)
 
 thermomut_df.to_csv("databases/thermomut_grouped.csv")

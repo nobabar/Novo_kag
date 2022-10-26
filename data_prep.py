@@ -162,7 +162,12 @@ train_data.sort_values(by=["gid"], inplace=True)
 train_data["dtm"] = train_data.groupby("gid")["tm"].rank(
     method="dense") / train_data.groupby("gid")["gid"].transform(len)
 
-train_data = train_data[[
-    "gid", "protein_sequence", "dtm", "wildtype"]].reset_index(drop=True)
+# add unique sequence id and rename group id
+train_data["seqid"] = "S" + train_data.index.astype(str)
+train_data["gid"] = "G" + train_data.gid.astype(str)
+
+# final dataframe
+train_data = train_data[["seqid", "gid", "protein_sequence",
+                         "dtm", "wildtype"]].reset_index(drop=True)
 
 train_data.to_csv("./train_grouped.csv")
