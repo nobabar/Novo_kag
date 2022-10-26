@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 # load datasets
@@ -10,5 +11,9 @@ thermomut_df.gid = thermomut_df.gid.add(train_df.gid.max())
 
 # merge datasets
 concat_train_df = pd.concat([train_df, thermomut_df], ignore_index=True)
+
+# group by wildtype and redefine gid
+concat_train_df['gid'] = concat_train_df.groupby("wildtype").ngroup().add(1)
+concat_train_df.sort_values(by=["gid"], inplace=True)
 
 concat_train_df.to_csv("train_all.csv")
