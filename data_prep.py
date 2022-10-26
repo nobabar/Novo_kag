@@ -88,7 +88,7 @@ def get_wildtype(proteins, is_retry=False):
 
 
 train_data["gid"] = -1
-train_data["type"] = "mutated"
+train_data["wildtype"] = ""
 grp = 0
 
 train_data["length"] = train_data.protein_sequence.str.len()
@@ -129,16 +129,14 @@ for i, count in enumerate(vc):
             # Use fast method to guess that it is only a few mutation away.
             if (wildtype[:k] == p[:k]) or (wildtype[k:k*2] == p[k:2*k]) or (wildtype[-k:] == p[-k:]):
                 train_data.loc[idx, "gid"] = grp
+                train_data.loc[idx, "wildtype"] = wildtype
 
         if len(train_data.loc[train_data.gid == grp]) >= MIN_GROUP_SIZE:
-            row = {"protein_sequence": wildtype, "pH": 0, "data_source": "",
-                   "tm": 0, "gid": grp, "length": length, "type": "wildtype"}
-            train_data = pd.concat(
-                [train_data, pd.DataFrame([row])], ignore_index=True)
             grp += 1
             is_retry = False
         else:
             train_data.loc[train_data.gid == grp, "gid"] = -1
+            train_data.loc[train_data.gid == grp, "wildtype"] = ""
             # to avoid an infinite loop, break out if we"ve already failed last time
             if is_retry:
                 break
@@ -158,13 +156,13 @@ train_data.drop_duplicates(subset=["protein_sequence"], inplace=True)
 train_data = train_data.groupby(
     "gid").filter(lambda x: len(x) >= MIN_GROUP_SIZE)
 
-train_data.sort_values(by=["gid", "type"], inplace=True)
+train_data.sort_values(by=["gid"], inplace=True)
 
 # rank normalize the Tm
 train_data["dtm"] = train_data.groupby("gid")["tm"].rank(
-    method="dense").add(-1) / train_data.groupby("gid")["gid"].transform(len)
+    method="dense") / train_data.groupby("gid")["gid"].transform(len)
 
 train_data = train_data[[
-    "gid", "protein_sequence", "dtm", "type"]].reset_index(drop=True)
+    "gid", "protein_sequence", "dtm", "wildtype"]].reset_index(drop=True)
 
 train_data.to_csv("./train_grouped.csv")

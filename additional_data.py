@@ -48,19 +48,21 @@ thermomut_df['gid'] = thermomut_df.groupby("swissprot").ngroup().add(1)
 
 # fetch sequences from uniprot
 thermomut_df["protein_sequence"] = ""
+thermomut_df["wildtype"] = ""
 thermomut_df["acc_id"] = ""
 
 base_url = "https://www.uniprot.org/uniprot/"
 
 for index, row in thermomut_df.iterrows():
     sequence = ""
+    wildtype = ""
 
     # try to fetch sequence from swissprot id
     try:
         swissprot_id = thermomut_df.loc[index, "swissprot"]
         url = base_url + swissprot_id + ".fasta"
         response = requests.post(url)
-        sequence = str(SeqIO.read(
+        wildtype = str(SeqIO.read(
             StringIO(''.join(response.text)), 'fasta').seq)
         thermomut_df.loc[index, "acc_id"] = swissprot_id
     except:
@@ -69,14 +71,14 @@ for index, row in thermomut_df.iterrows():
             uniprot_id = thermomut_df.loc[index, "uniprot"]
             url = base_url + uniprot_id + ".fasta"
             response = requests.post(url)
-            sequence = str(SeqIO.read(
+            wildtype = str(SeqIO.read(
                 StringIO(''.join(response.text)), 'fasta').seq)
             thermomut_df.loc[index, "acc_id"] = uniprot_id
         except:
             # both fetch failed, sequence is empty
             sequence = ""
 
-    if sequence:
+    if wildtype:
         # apply mutation(s) on sequence
         mutation_code = thermomut_df.loc[index, "mutation_code"]
         match = re.findall(r"([a-z]+)([0-9]+)([a-z]+)", mutation_code, re.I)
@@ -84,30 +86,19 @@ for index, row in thermomut_df.iterrows():
             pos = int(mutation[1])
             try:
                 # try to apply the mutation to the sequence
-                if sequence[pos-1] == mutation[0]:
-                    sequence = sequence[:(pos-1)] + \
-                        mutation[2] + sequence[pos:]
+                if wildtype[pos-1] == mutation[0]:
+                    sequence = wildtype[:(pos-1)] + \
+                        mutation[2] + wildtype[pos:]
             except:
                 # if it fails then the sequence might be invalid
+                wildtype = ""
                 sequence = ""
                 break
+    thermomut_df.loc[index, "wildtype"] = wildtype
     thermomut_df.loc[index, "protein_sequence"] = sequence
 
 # filter empty sequences
 thermomut_df = thermomut_df[thermomut_df["protein_sequence"].str.len() != 0]
-
-thermomut_df["type"] = "mutated"
-
-for gid, acc_id in zip(thermomut_df["gid"].unique(), thermomut_df["acc_id"].unique()):
-    url = base_url + acc_id + ".fasta"
-    response = requests.post(url)
-    sequence = str(SeqIO.read(
-        StringIO(''.join(response.text)), 'fasta').seq)
-
-    row = {"gid": gid, "protein_sequence": sequence,
-           "dtm": 0, "acc_id": acc_id, "type": "wildtype"}
-    thermomut_df = pd.concat(
-        [thermomut_df, pd.DataFrame([row])], ignore_index=True)
 
 # remove possible duplicates
 thermomut_df.drop_duplicates(subset=["protein_sequence"], inplace=True)
@@ -116,17 +107,14 @@ thermomut_df.drop_duplicates(subset=["protein_sequence"], inplace=True)
 thermomut_df = thermomut_df.groupby(
     "gid").filter(lambda x: len(x) >= 4)
 
-thermomut_df.sort_values(by=["gid", "type"], inplace=True)
-
-# set dTM of wildtype to -1000 to make it the first in rankings
-thermomut_df.loc[thermomut_df["type"] == "wildtype", "dtm"] = -1000
+thermomut_df.sort_values(by=["gid"], inplace=True)
 
 # rank normalize the Tm
 thermomut_df["dtm"] = thermomut_df.groupby("gid")["dtm"].rank(
-    method="dense").add(-1) / thermomut_df.groupby("gid")["gid"].transform(len)
+    method="dense") / thermomut_df.groupby("gid")["gid"].transform(len)
 
 # final dataframe
 thermomut_df = thermomut_df[[
-    "gid", "protein_sequence", "dtm", "acc_id", "type"]].reset_index(drop=True)
+    "gid", "protein_sequence", "dtm", "acc_id", "wildtype"]].reset_index(drop=True)
 
 thermomut_df.to_csv("databases/thermomut_grouped.csv")
