@@ -119,6 +119,6 @@ thermomut_df["seqid"] = "S" + thermomut_df.index.astype(str)
 
 # final dataframe
 thermomut_df = thermomut_df[["seqid", "gid", "protein_sequence", "dtm",
-                             "acc_id", "wildtype"]].reset_index(drop=True)
+                             "wildtype"]].reset_index(drop=True)
 
 thermomut_df.to_csv("databases/thermomut_grouped.csv")
