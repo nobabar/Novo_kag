@@ -7,6 +7,10 @@ import pandas as pd
 import requests
 from Bio import SeqIO
 
+# ==============================================================================
+# ThermoMut
+# ==============================================================================
+
 with open('databases/thermomutdb.json') as json_file:
     thermomut_db = json.load(json_file)
 
@@ -122,3 +126,79 @@ thermomut_df = thermomut_df[["seqid", "gid", "protein_sequence", "dtm",
                              "wildtype"]].reset_index(drop=True)
 
 thermomut_df.to_csv("databases/thermomut_grouped.csv")
+
+# ==============================================================================
+# Fireprot
+# ==============================================================================
+
+fireprot_df = pd.read_csv("databases/fireprotdb_results.csv", low_memory=False)
+
+column_keep = ["position", "wild_type", "mutation", "dTm", "tm", "sequence"]
+
+fireprot_df = fireprot_df[column_keep]
+
+# remove NAs and duplicates
+fireprot_df = fireprot_df.dropna().drop_duplicates()
+
+# Drop rows where the wildtype amino acid does not equal the amino acid
+# in the correct position as indicated
+fireprot_df = fireprot_df[~(fireprot_df["wild_type"] != fireprot_df.apply(
+    lambda _row: _row["sequence"][(_row["position"]-1)], axis=1))]
+
+# Add new column for mutation string as it is often used
+fireprot_df.insert(4, "mutation_code", fireprot_df["wild_type"] +
+                   fireprot_df["position"].astype(str) + fireprot_df["mutation"])
+
+fireprot_df.drop(columns=["wild_type", "position", "mutation"], inplace=True)
+
+fireprot_df.rename(columns={"sequence": "wildtype",
+                   "dTm": "dtm"}, inplace=True)
+
+for index, row in fireprot_df.iterrows():
+    sequence = ""
+    wildtype = fireprot_df.loc[index, "wildtype"]
+
+    # apply mutation(s) on sequence
+    mutation_code = fireprot_df.loc[index, "mutation_code"]
+    match = re.findall(r"([a-z]+)([0-9]+)([a-z]+)", mutation_code, re.I)
+    for mutation in match:
+        pos = int(mutation[1])
+        try:
+            # try to apply the mutation to the sequence
+            if wildtype[pos-1] == mutation[0]:
+                sequence = wildtype[:(pos-1)] + \
+                    mutation[2] + wildtype[pos:]
+        except:
+            # if it fails then the sequence might be invalid
+            sequence = ""
+            break
+    fireprot_df.loc[index, "protein_sequence"] = sequence
+
+# filter empty sequences
+fireprot_df = fireprot_df[fireprot_df["protein_sequence"].str.len() != 0]
+
+# remove possible duplicates
+fireprot_df.drop_duplicates(subset=["protein_sequence"], inplace=True)
+
+# filter group with less than 4 proteins
+fireprot_df = fireprot_df.groupby(
+    "wildtype").filter(lambda x: len(x) >= 4)
+
+# assign group id
+fireprot_df.insert(0, "gid", "G" +
+                   fireprot_df.groupby("wildtype").ngroup().astype(str))
+
+fireprot_df.sort_values(by=["gid"], inplace=True)
+
+# add unique sequence id
+fireprot_df.reset_index(drop=True, inplace=True)
+fireprot_df.insert(0, "seqid", "S" + fireprot_df.index.astype(str))
+
+# rank normalize the Tm
+fireprot_df["dtm"] = fireprot_df.groupby("gid")["dtm"].rank(
+    method="dense") / fireprot_df.groupby("gid")["gid"].transform(len)
+
+fireprot_df = fireprot_df[["seqid", "gid",
+                           "protein_sequence", "dtm", "wildtype"]]
+
+fireprot_df.to_csv("databases/fireprot_grouped.csv")

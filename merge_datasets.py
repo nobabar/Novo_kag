@@ -1,15 +1,13 @@
-import numpy as np
 import pandas as pd
 
 # load datasets
 train_df = pd.read_csv("train_grouped.csv", index_col=0)
 thermomut_df = pd.read_csv("databases/thermomut_grouped.csv", index_col=0)
-
-# prepare for merge
-thermomut_df.gid = thermomut_df.gid.add(train_df.gid.max())
+fireprot_df = pd.read_csv("databases/fireprot_grouped.csv", index_col=0)
 
 # merge datasets
-concat_train_df = pd.concat([train_df, thermomut_df], ignore_index=True)
+concat_train_df = pd.concat([train_df, thermomut_df, fireprot_df],
+                            ignore_index=True)
 
 # group by wildtype and redefine gid
 concat_train_df['gid'] = "G" + \
