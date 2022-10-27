@@ -159,8 +159,8 @@ train_data = train_data.groupby(
 train_data.sort_values(by=["gid"], inplace=True)
 
 # rank normalize the Tm
-train_data["dtm"] = train_data.groupby("gid")["tm"].rank(
-    method="dense") / train_data.groupby("gid")["gid"].transform(len)
+train_data["dtm"] = (10 + train_data.groupby("gid")["tm"].rank(method="dense")
+                     ) / (20 + train_data.groupby("gid")["gid"].transform(len))
 
 # add unique sequence id and rename group id
 train_data["seqid"] = "S" + train_data.index.astype(str)

@@ -115,8 +115,8 @@ thermomut_df = thermomut_df.groupby(
 thermomut_df.sort_values(by=["gid"], inplace=True)
 
 # rank normalize the Tm
-thermomut_df["dtm"] = thermomut_df.groupby("gid")["dtm"].rank(
-    method="dense") / thermomut_df.groupby("gid")["gid"].transform(len)
+thermomut_df["dtm"] = (10 + thermomut_df.groupby("gid")["dtm"].rank(method="dense")
+                       ) / (20 + thermomut_df.groupby("gid")["gid"].transform(len))
 
 # add unique sequence id
 thermomut_df["seqid"] = "S" + thermomut_df.index.astype(str)
@@ -195,8 +195,8 @@ fireprot_df.reset_index(drop=True, inplace=True)
 fireprot_df.insert(0, "seqid", "S" + fireprot_df.index.astype(str))
 
 # rank normalize the Tm
-fireprot_df["dtm"] = fireprot_df.groupby("gid")["dtm"].rank(
-    method="dense") / fireprot_df.groupby("gid")["gid"].transform(len)
+fireprot_df["dtm"] = (10 + fireprot_df.groupby("gid")["dtm"].rank(method="dense")
+                      ) / (20 + fireprot_df.groupby("gid")["gid"].transform(len))
 
 fireprot_df = fireprot_df[["seqid", "gid",
                            "protein_sequence", "dtm", "wildtype"]]

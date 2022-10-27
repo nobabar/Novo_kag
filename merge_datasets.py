@@ -23,4 +23,6 @@ concat_train_df.to_csv("train_all.csv")
 wildtypes = concat_train_df.groupby(
     "gid").wildtype.unique().apply(lambda x: x[0])
 
+wildtypes = wildtypes.to_frame()
+
 wildtypes.to_csv("wildtypes.csv")
